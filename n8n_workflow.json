@@ -1,0 +1,1580 @@
+{
+  "name": "My workflow 8",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "friday",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1040,
+        496
+      ],
+      "id": "6aa95bdb-1af8-4165-972a-14970584a839",
+      "name": "Webhook",
+      "webhookId": "475be0b1-6414-4fc9-a153-7a5ae07e3e6a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are Friday, an AI voice assistant. Return EXACTLY ONE valid JSON object — no Markdown, code fences, comments, or text outside the JSON. Always syntactically valid.\n\nLANGUAGES: English, Telugu, Hindi, Tamil, Kannada, Malayalam, and Romanized (English-letter) versions of any of these. Interpret Romanized input as the language it represents (\"chrome open cheyyi\" = Telugu). Input script/language and the requested action are independent — a Romanized command still returns an automation JSON, not a language JSON.\n\nGLOBAL RULE: preserve query/contact/message/filename/path/song/topic/location exactly as the user said them — no translation, no summarizing, no rephrasing, no guessing a value the user didn't state.\n\n--------------------------------------------------\nSTEP 1 — AUTOMATION OR CHAT\n--------------------------------------------------\nIf the user wants an action performed (open/close an app, open a file, play a song, search inside an app, control YouTube playback, WhatsApp/Instagram search or send, VS Code/Google/Terminal/File Manager actions, weather, location, date/time, news) → return that AUTOMATION action. Never classify these as \"chat\".\nOtherwise (question, conversation, anything unsupported) → \"chat\".\n\nSTEP 1B — CONTEXT FOR FOLLOW-UPS\nResolve ambiguous bare follow-ups (no app/contact/number named) using conversation history:\n- After YouTube was opened/searched: \"search for X\" → youtube_search; \"play/pause/stop it\", \"go back\" → youtube_play/pause/stop/back.\n- After a WhatsApp or Instagram contact was searched/messaged: an ambiguous follow-up (\"send another message\") resolves \"contact\" to that same prior contact (same form — number or name — as before).\nAn explicit app name, phone number, or contact name in the CURRENT message always overrides assumed context. If no relevant context exists, ask via {\"action\":\"chat\",\"language\":\"<lang>\",\"reply\":\"<clarify>\"} instead of guessing. Context resolution never overrides an explicit, unambiguous command.\n\n--------------------------------------------------\nSTEP 2A — AUTOMATION ACTIONS\n--------------------------------------------------\n1. Open: {\"action\":\"open\",\"app\":\"<app>\"}  — apps include chrome, youtube, whatsapp, instagram, spotify, vscode, google, terminal, filemanager, or any named app.\n2. Close: {\"action\":\"close\",\"app\":\"<app>\"}\n3. Open file: {\"action\":\"open_file\",\"filename\":\"<filename>\"}\n4. Play music: {\"action\":\"play\",\"app\":\"spotify\",\"song\":\"<song>\"}\n5. Open + query (YouTube and Instagram ONLY, only when search is requested in the same sentence): {\"action\":\"open\",\"app\":\"youtube\",\"query\":\"<term>\"} / {\"action\":\"open\",\"app\":\"instagram\",\"query\":\"<name>\"}\n5B. Open + path (VS Code and File Manager ONLY, only when a location is named in the same sentence): {\"action\":\"open\",\"app\":\"vscode\",\"path\":\"<path>\"} / {\"action\":\"open\",\"app\":\"filemanager\",\"path\":\"<path>\"}\n6. Search only:\n   {\"action\":\"youtube_search\",\"query\":\"<term>\"} / {\"action\":\"spotify_search\",\"query\":\"<term>\"} / {\"action\":\"google_search\",\"query\":\"<term>\"} / {\"action\":\"instagram_search\",\"query\":\"<name>\"} / {\"action\":\"terminal_search\",\"query\":\"<term>\"} / {\"action\":\"filemanager_search\",\"query\":\"<term>\",\"path\":\"<optional folder>\"}\n   {\"action\":\"whatsapp_search\",\"contact\":\"<phone number OR saved contact name — one field, either form>\"}\n7. YouTube playback (no extra fields): {\"action\":\"youtube_play\"} / {\"action\":\"youtube_pause\"} / {\"action\":\"youtube_stop\"} / {\"action\":\"youtube_back\"}\n7B. WhatsApp send: {\"action\":\"whatsapp_send\",\"contact\":\"<number or name>\",\"message\":\"<text>\"}\n    Send file (phone number ONLY — names can't be resolved for files yet; if only a name is given, ask for the number instead of guessing): {\"action\":\"whatsapp_send_file\",\"contact\":\"<phone number>\",\"filename\":\"<file>\",\"message\":\"<optional caption>\"}\n7C. Instagram send: {\"action\":\"instagram_send\",\"contact\":\"<name/username>\",\"message\":\"<text>\"}\n7D/7E. Google open never takes \"query\" (use google_search instead). VS Code has no search action.\n8. Weather — omit \"location\" unless the user named a place: {\"action\":\"weather\",\"language\":\"<lang>\"} or {\"action\":\"weather\",\"location\":\"<place>\",\"language\":\"<lang>\"}\n9. Location: {\"action\":\"location\"}\n10. Date/time: {\"action\":\"datetime\"}\n11. News: {\"action\":\"news\",\"language\":\"<lang>\"} — add \"topic\" if the user named one.\n\nRules: no \"reply\" field on automation actions. \"language\" appears ONLY on weather/news/chat — never elsewhere. Never fall back to \"chat\" for a clear automation request, except the STEP 1B clarification case or the whatsapp_send_file name-without-number case.\n\n--------------------------------------------------\nSTEP 2B — CHAT\n--------------------------------------------------\n{\"action\":\"chat\",\"language\":\"<lang>\",\"reply\":\"<actual answer>\"}\n\"reply\" must genuinely answer — never repeat or translate the question back, never mix scripts. English→English; Telugu→Telugu script only (never Devanagari/Romanized); Hindi→Devanagari only; Tamil/Kannada/Malayalam→their own script only. Romanized input replies in that language's native script, never Romanized. Keep replies concise — spoken aloud.\n\n--------------------------------------------------\nEXAMPLES\n--------------------------------------------------\n\"open chrome\" → {\"action\":\"open\",\"app\":\"chrome\"}\n\"close chrome\" → {\"action\":\"close\",\"app\":\"chrome\"}\n\"spotify lo Believer play cheyyi\" → {\"action\":\"play\",\"app\":\"spotify\",\"song\":\"Believer\"}\n\"youtube open chesi Naatu Naatu search cheyyi\" → {\"action\":\"open\",\"app\":\"youtube\",\"query\":\"Naatu Naatu\"}\n\"open instagram and search for foodie_diaries\" → {\"action\":\"open\",\"app\":\"instagram\",\"query\":\"foodie_diaries\"}\n\"open vscode in my Friday project folder\" (known path) → {\"action\":\"open\",\"app\":\"vscode\",\"path\":\"C:\\\\Projects\\\\Friday\"}\n(follow-up after YouTube context) \"search for believer song\" → {\"action\":\"youtube_search\",\"query\":\"believer song\"}\n(follow-up) \"play it\" / \"pause\" / \"stop it\" / \"go back\" → youtube_play / youtube_pause / youtube_stop / youtube_back\n\"whatsapp lo 9876543210 search cheyyi\" → {\"action\":\"whatsapp_search\",\"contact\":\"9876543210\"}\n\"search for Ramesh on whatsapp\" → {\"action\":\"whatsapp_search\",\"contact\":\"Ramesh\"}\n\"send 'happy birthday' to 9876543210 on whatsapp\" → {\"action\":\"whatsapp_send\",\"contact\":\"9876543210\",\"message\":\"happy birthday\"}\n\"send 'running late' to Ramesh on whatsapp\" → {\"action\":\"whatsapp_send\",\"contact\":\"Ramesh\",\"message\":\"running late\"}\n\"send resume.pdf to 9876543210 on whatsapp\" → {\"action\":\"whatsapp_send_file\",\"contact\":\"9876543210\",\"filename\":\"resume.pdf\"}\n\"send resume.pdf to Ramesh on whatsapp\" (no number, none in context) → {\"action\":\"chat\",\"language\":\"English\",\"reply\":\"What's Ramesh's phone number? I need it to send the file.\"}\n\"search for Priya on instagram\" → {\"action\":\"instagram_search\",\"query\":\"Priya\"}\n\"send 'happy birthday' to priya_23 on instagram\" → {\"action\":\"instagram_send\",\"contact\":\"priya_23\",\"message\":\"happy birthday\"}\n\"search google for weather in Bhimavaram\" → {\"action\":\"google_search\",\"query\":\"weather in Bhimavaram\"}\n\"open terminal\" → {\"action\":\"open\",\"app\":\"terminal\"}\n\"search the terminal for 'error'\" → {\"action\":\"terminal_search\",\"query\":\"error\"}\n\"open file manager in downloads folder\" → {\"action\":\"open\",\"app\":\"filemanager\",\"path\":\"Downloads\"}\n\"find resume.pdf in file manager\" → {\"action\":\"filemanager_search\",\"query\":\"resume.pdf\"}\n\"eroju weather ela undhi?\" → {\"action\":\"weather\",\"language\":\"Telugu\"}\n\"Delhi lo weather ela undhi?\" → {\"action\":\"weather\",\"location\":\"Delhi\",\"language\":\"Telugu\"}\n\"cricket news chudandi\" → {\"action\":\"news\",\"topic\":\"cricket\",\"language\":\"Telugu\"}\n\"nenu ekkada unna?\" → {\"action\":\"location\"}\n\"ippudu time entha?\" → {\"action\":\"datetime\"}\n\"Nuvvu evaru?\" → {\"action\":\"chat\",\"language\":\"Telugu\",\"reply\":\"నేను ఫ్రైడేను. మీకు ఎలా సహాయం చేయగలను?\"}\n\"kaise ho?\" → {\"action\":\"chat\",\"language\":\"Hindi\",\"reply\":\"मैं ठीक हूँ। मैं आपकी कैसे सहायता कर सकता हूँ?\"}\n\n--------------------------------------------------\nFINAL CHECK\n--------------------------------------------------\nValid single JSON • correct action + only its relevant fields • \"language\" only on weather/news/chat • \"query\" only on open for youtube/instagram • \"path\" only on open for vscode/filemanager • whatsapp_search/whatsapp_send always have \"contact\" as-stated (never split into two fields, never guessed) • whatsapp_send_file needs a phone number, not a name • script matches detected language exactly, no mixing, no Romanized replies • ambiguous follow-ups use STEP 1B context or ask via chat, never guess • explicit app/number/name in the current message overrides context."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -768,
+        496
+      ],
+      "id": "7d27e7fe-76f1-4922-9039-f9bd81c1862b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.8-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        768
+      ],
+      "id": "5c1588bf-ed88-4874-bfd9-09e8d40e47b8",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groq": {
+          "id": "z6DsNkrlnYyZ7Fh1",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "open",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "4d6d21fa-ebad-4371-927c-7dbb7a020b78"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "76070bde-e80e-412b-8041-3f178f464a44",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "close",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "81d0bcd2-1c90-44de-a487-a22a68804910",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "youtube_search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ca862d8c-c978-4fff-aa6a-7574a90ede4b",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "youtube_play",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e06656c4-48f8-4ea9-9bf9-57e3e4f3928a",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "youtube_pause",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6800ee0b-eb91-41d2-be81-527ca4c79600",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "youtube_stop",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3516b51e-ce49-4851-b60b-9d527e60fd33",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "youtube_back",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c34c9b36-cd5b-483d-a822-8267746cfaa6",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "whatsapp_search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "117e2257-76d3-4000-a405-9bf21345c6f5",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "instagram_search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9c6d1dca-7182-4ddf-b3bc-7671fa34aa4c",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "instagram_send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4e27fc11-a853-4f87-8631-437fda1291c1",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "terminal_search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "20833d29-26ef-4c97-af0d-19cbc73695b4",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "google_search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b38bf80f-0740-48eb-b9ec-7e2ec012d2ce",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "filemanager_search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "aada28d4-9ea3-43ed-8b7b-f9428fa93b07",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "whatsapp_send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "76f5967b-216b-478e-a89c-f56951be72da",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "whatsapp_send_file",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "891b1473-d21a-4c5a-8d66-fb9909acf54b",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "play",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7d156b2a-40e4-49e1-9403-81154ce25437",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "chat",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b4b8af19-0e92-420c-a75b-0da13c0c82be",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "weather",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "56a9e2b4-706d-4dd7-9db8-9e9cbc6f4b3a",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "location",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6bc40432-f4f6-4b67-a44f-669f8fa3c11a",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "news",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        144
+      ],
+      "id": "bbdfd5fb-e25b-4621-983b-330fb8334a60",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f016294-a604-47ef-902b-655b78d44955",
+              "name": "spotifyUrl",
+              "value": "={{\"https://open.spotify.com/search/\" + encodeURIComponent($json.output.song)}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        560
+      ],
+      "id": "880248f8-1565-42b8-ae8f-253562ec77be",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:5000/open_url",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{$json.spotifyUrl}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        576,
+        560
+      ],
+      "id": "5ce4d1ee-1a81-40bf-beed-bfc3fc10a818",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"open\",\n        \"close\",\n        \"open_file\",\n        \"play\",\n        \"youtube_search\",\n        \"whatsapp_search\",\n        \"spotify_search\",\n        \"google_search\",\n        \"instagram_search\",\n        \"terminal_search\",\n        \"filemanager_search\",\n        \"youtube_play\",\n        \"youtube_pause\",\n        \"youtube_stop\",\n        \"youtube_back\",\n        \"whatsapp_send\",\n        \"whatsapp_send_file\",\n        \"instagram_send\",\n        \"weather\",\n        \"location\",\n        \"datetime\",\n        \"news\",\n        \"chat\"\n      ]\n    },\n    \"app\": {\n      \"type\": \"string\"\n    },\n    \"song\": {\n      \"type\": \"string\"\n    },\n    \"filename\": {\n      \"type\": \"string\"\n    },\n    \"topic\": {\n      \"type\": \"string\"\n    },\n    \"location\": {\n      \"type\": \"string\"\n    },\n    \"path\": {\n      \"type\": \"string\"\n    },\n    \"query\": {\n      \"type\": \"string\"\n    },\n    \"contact\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    },\n    \"language\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"English\",\n        \"Telugu\",\n        \"Hindi\",\n        \"Tamil\",\n        \"Kannada\",\n        \"Malayalam\"\n      ]\n    },\n    \"reply\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"action\"\n  ],\n  \"additionalProperties\": false,\n  \"allOf\": [\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"open\" } } },\n      \"then\": { \"required\": [\"app\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"close\" } } },\n      \"then\": { \"required\": [\"app\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"open_file\" } } },\n      \"then\": { \"required\": [\"filename\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"play\" } } },\n      \"then\": { \"required\": [\"app\", \"song\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"youtube_search\" } } },\n      \"then\": { \"required\": [\"query\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"whatsapp_search\" } } },\n      \"then\": { \"required\": [\"contact\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"spotify_search\" } } },\n      \"then\": { \"required\": [\"query\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"google_search\" } } },\n      \"then\": { \"required\": [\"query\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"instagram_search\" } } },\n      \"then\": { \"required\": [\"query\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"terminal_search\" } } },\n      \"then\": { \"required\": [\"query\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"filemanager_search\" } } },\n      \"then\": { \"required\": [\"query\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"whatsapp_send\" } } },\n      \"then\": { \"required\": [\"contact\", \"message\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"whatsapp_send_file\" } } },\n      \"then\": { \"required\": [\"contact\", \"filename\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"instagram_send\" } } },\n      \"then\": { \"required\": [\"contact\", \"message\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"weather\" } } },\n      \"then\": { \"required\": [\"language\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"chat\" } } },\n      \"then\": { \"required\": [\"language\", \"reply\"] }\n    },\n    {\n      \"if\": { \"properties\": { \"action\": { \"const\": \"news\" } } },\n      \"then\": { \"required\": [\"language\"] }\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        768
+      ],
+      "id": "9357eb55-4fac-4470-b332-7ccd0579c0c5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"reply\": $json.output.reply, \"language\": $json.output.language } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1008,
+        640
+      ],
+      "id": "ebad401a-f61d-4ea4-9879-95a4c6dd009e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "appid",
+              "value": "YOUR_OPENWEATHERMAP_API_KEY"
+            },
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.output.location }}"
+            },
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        784
+      ],
+      "id": "b7a0729e-1a11-4a17-a6ad-b4ef433eca5c",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "f1tfgJsZvlOy0ZfS",
+          "name": "Query Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const weather = $input.item.json;\nconst original = $('AI Agent').item.json;\n\nconst cityName = weather.name; // present in both OpenWeatherMap response shapes\n\nconst summary = `Temperature ${weather.main.temp}°C, feels like ${weather.main.feels_like}°C, ${weather.weather[0].description}, humidity ${weather.main.humidity}%, wind ${weather.wind.speed} m/s in ${cityName}.`;\n\nreturn {\n  json: {\n    language: original.language,\n    location: original.location || cityName,\n    summary: summary\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        848
+      ],
+      "id": "d24fbb7b-6454-4628-9190-eb1ff44950be",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"openai/gpt-oss-120b\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are Friday, Tony Stark-style AI assistant. Given raw weather data, respond with ONE short, natural, confident sentence a voice assistant would say out loud — no JSON, no lists, no markdown. Match the wit and economy of JARVIS: precise, a little dry, never robotic. The user's language is exactly: {{ $('AI Agent').item.json.output.language }}. Reply ONLY in {{ $('AI Agent').item.json.output.language }} using its own native script. Telugu uses Telugu script (అ,ఆ,ఇ...) — NEVER Devanagari/Hindi script. Hindi uses Devanagari script (अ,आ,इ...) — NEVER Telugu script. Do not confuse these two languages under any circumstances.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.summary }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1200,
+        848
+      ],
+      "id": "9cdabc88-f31a-4a83-a144-6d33f968c681",
+      "name": "HTTP Request5",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EKCQN1EBhzYtjZVz",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a102763-571b-4183-bf77-e2325abd3723",
+              "name": "reply",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1392,
+        848
+      ],
+      "id": "1499ea88-5fcf-4b4d-8eca-4c95079c2d58",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.reply }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1600,
+        848
+      ],
+      "id": "bd56b315-d4ff-487b-9ec8-732c910110fb",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "url": "=https://newsapi.org/v2/everything?",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.output.topic }} "
+            },
+            {
+              "name": "sortBy",
+              "value": "publishedAt"
+            },
+            {
+              "name": "from",
+              "value": "={{ $now.minus({ days: 1 }).toISODate() }}"
+            },
+            {
+              "name": "pageSize",
+              "value": "10"
+            },
+            {
+              "name": "apikey",
+              "value": "YOUR_NEWSAPI_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        736,
+        1344
+      ],
+      "id": "cbd176ca-4216-4885-a719-d1bc36cabfc5",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1ea6c9d9-4094-488c-86bd-ba44e0ce67da",
+              "leftValue": "={{ $json.output.location }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        800
+      ],
+      "id": "b10a86f8-56e1-462e-a3ed-a5f17e12bd61",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "http://ip-api.com/json/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        960
+      ],
+      "id": "d6d12dfe-e927-45d4-917c-8fed89f30389",
+      "name": "HTTP Request7"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "lat",
+              "value": "={{ $json.lat }}"
+            },
+            {
+              "name": "lon",
+              "value": "={{ $json.lon }}"
+            },
+            {
+              "name": "appid",
+              "value": "YOUR_OPENWEATHERMAP_API_KEY"
+            },
+            {
+              "name": "units",
+              "value": "metric"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        960
+      ],
+      "id": "5bfbf2ad-ee15-4189-96e3-dd7343e3aa3b",
+      "name": "HTTP Request8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const news = $input.item.json;\nconst original = $('AI Agent').item.json.output;\n\nconst topHeadlines = news.articles\n  .slice(0, 10)\n  .map(a => a.title)\n  .join(\". \");\n\nreturn {\n  json: {\n    language: original.language,\n    topic: original.topic || \"general\",\n    summary: topHeadlines\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        1424
+      ],
+      "id": "430d24a1-873e-4682-bf24-b5a1ffe620ab",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  model: \"openai/gpt-oss-120b\",\n  messages: [\n    { role: \"system\", content: `You are Friday, Tony Stark-style AI assistant. Given a list of news headlines, summarize them into 2-3 short, natural spoken sentences a voice assistant would say out loud — no JSON, no lists, no markdown, no headline-by-headline reading. Match the wit and economy of JARVIS: precise, a little dry, never robotic. The user's language is exactly: ${$('AI Agent').item.json.output.language}. Reply ONLY in ${$('AI Agent').item.json.output.language} using its own native script. Telugu uses Telugu script (అ,ఆ,ఇ...) — NEVER Devanagari/Hindi script. Hindi uses Devanagari script (अ,आ,इ...) — NEVER Telugu script. Do not confuse these two languages under any circumstances.` },\n    { role: \"user\", content: $json.summary }\n  ]\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1232,
+        1424
+      ],
+      "id": "039e6bea-424c-4344-9276-e180c7548874",
+      "name": "HTTP Request9",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EKCQN1EBhzYtjZVz",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "56202edc-3ab5-415f-9d13-3887c97c7ee6",
+              "name": "reply",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1408,
+        1424
+      ],
+      "id": "e8f0d57f-cb7a-4649-ad9a-86f00aee8a30",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.reply }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1584,
+        1424
+      ],
+      "id": "6c382b91-2430-4d82-aa38-54844b780eeb",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "35c3e253-6768-4f4c-b37b-e1c00cfbf666",
+              "leftValue": "={{ $json.output.topic }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        1360
+      ],
+      "id": "5f2810c1-c1ba-4151-94dd-f61c74468b56",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything?domains=timesofindia.indiatimes.com,thehindu.com,ndtv.com,hindustantimes.com&sortBy=publishedAt&from={{ $now.minus({ days: 1 }).toISODate() }}&pageSize=10",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_NEWSAPI_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        736,
+        1504
+      ],
+      "id": "65e2ef00-dcc3-4f27-8625-1ac422191804",
+      "name": "HTTP Request10"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c45efa4c-62b8-4e4c-abaa-50bd17f11373",
+              "name": "=endpoint",
+              "value": "={{ ['open','close'].includes($json.output.action) && $json.output.app === 'youtube' ? '/youtube/' + $json.output.action\n : ['open','close'].includes($json.output.action) && $json.output.app === 'whatsapp' ? '/whatsapp/' + $json.output.action\n : ['open','close'].includes($json.output.action) && $json.output.app === 'instagram' ? '/instagram/' + $json.output.action\n : ['open','close'].includes($json.output.action) && $json.output.app === 'vscode' ? '/vscode/' + $json.output.action\n : ['open','close'].includes($json.output.action) && $json.output.app === 'google' ? '/google/' + $json.output.action\n : ['open','close'].includes($json.output.action) && $json.output.app === 'terminal' ? '/terminal/' + $json.output.action\n : ['open','close'].includes($json.output.action) && $json.output.app === 'filemanager' ? '/filemanager/' + $json.output.action\n : $json.output.action.startsWith('youtube_') ? '/youtube/' + $json.output.action.replace('youtube_','')\n : $json.output.action.startsWith('whatsapp_') ? '/whatsapp/' + $json.output.action.replace('whatsapp_','')\n : $json.output.action.startsWith('instagram_') ? '/instagram/' + $json.output.action.replace('instagram_','')\n : $json.output.action === 'spotify_search' ? '/spotify/search'\n : $json.output.action === 'google_search' ? '/google/search'\n : $json.output.action === 'terminal_search' ? '/terminal/search'\n : $json.output.action === 'filemanager_search' ? '/filemanager/search'\n : '/unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "e78ba063-87a4-4a9d-8a18-aec99a6d388c",
+              "name": "=body",
+              "value": "={{ { app: $json.output.app, query: $json.output.query, path: $json.output.path, contact: $json.output.contact, message: $json.output.message, filename: $json.output.filename } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        368
+      ],
+      "id": "c45bdab9-bab4-40ca-a5ea-194a29aae5d5",
+      "name": "Route Device action"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "= http://host.docker.internal:5000{{ $json.endpoint }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        368
+      ],
+      "id": "d3e1085d-dc78-465d-9e48-a31e3480e4b9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({reply:$json.message}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        800,
+        368
+      ],
+      "id": "183e608e-eb8d-469e-b332-cab531b08725",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({reply:$json.message}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        784,
+        560
+      ],
+      "id": "982ab6fe-0e26-46cd-93db-17b93ba1498a",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the response from the HTTP Request node (IP geolocation API)\nconst input = $input.first().json;\n\n// ip-api.com response fields: city, regionName, country, lat, lon, etc.\nconst city = input.city;\nconst region = input.regionName;\nconst country = input.country;\nconst lat = input.lat;\nconst lon = input.lon;\n\nif (!city && (!lat || !lon)) {\n  throw new Error('Location data missing from HTTP Request response. Check field names.');\n}\n\nreturn [\n  {\n    json: {\n      city: city,\n      region: region,\n      country: country,\n      lat: lat,\n      lon: lon,\n      // combined string, handy for weather APIs that take a place name\n      location: [city, region, country].filter(Boolean).join(', ')\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        1152
+      ],
+      "id": "f3cbf94d-5e42-4509-ab13-6ce727703848",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de827424-247f-4490-8144-fffed5a4e9d1",
+              "name": "reply",
+              "value": "={{ $json.location }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        1152
+      ],
+      "id": "8d6778d3-b2e3-4728-a5be-0ff2ac3e15b9",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.reply }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        1152
+      ],
+      "id": "a0085b6b-65b7-4a3b-8aa2-eefbf9cb1fe0",
+      "name": "Respond to Webhook5"
+    },
+    {
+      "parameters": {
+        "url": "http://ip-api.com/json/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        464,
+        1152
+      ],
+      "id": "61a142ee-79cc-480e-a539-336ff7bf7f18",
+      "name": "HTTP Request11"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.session_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -704,
+        752
+      ],
+      "id": "5513e6bb-73ae-4dd1-a6ac-dd44163d2d34",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Device action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request11",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request7": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request8": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request9": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request10": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Device action": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request11": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6ff322da-8223-4c61-96b5-f0c1b1af6b34",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c7b85f8d1c52876701bb4618ba04e6eb6e052ca1453b79c9d962b2f118734a81"
+  },
+  "nodeGroups": [],
+  "id": "ESpL2MbJSl7ezuye",
+  "tags": []
+}
